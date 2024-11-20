@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor HTML/CSS/JS com Explicações e Chat IA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .container {
+      display: flex;
+      flex: 1;
+      gap: 10px;
+      padding: 10px;
+    }
+    .editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    iframe {
+      flex: 1;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #response {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+    }
+    #userInput {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 style="text-align: center;">Editor HTML, CSS e JavaScript com Feedback IA</h1>
+  </header>
+  <div class="container">
+    <!-- HTML Editor -->
+    <div class="editor">
+      <h3>HTML</h3>
+      <textarea id="html-editor"></textarea>
+    </div>
+    <!-- CSS Editor -->
+    <div class="editor">
+      <h3>CSS</h3>
+      <textarea id="css-editor"></textarea>
+    </div>
+    <!-- JS Editor -->
+    <div class="editor">
+      <h3>JavaScript</h3>
+      <textarea id="js-editor"></textarea>
+    </div>
+  </div>
+  <div class="container">
+    <!-- Output Iframe -->
+    <iframe id="output" title="Output"></iframe>
+    <!-- Explanation Iframe -->
+    <iframe id="explanation" title="Explanation"></iframe>
+  </div>
+  <button onclick="runCode()">Executar e Explicar Código</button>
+
+  <!-- Input para o chat IA -->
+  <div class="container">
+    <textarea id="userInput" placeholder="Digite sua mensagem aqui"></textarea>
+    <button onclick="sendMessage()">Enviar para IA</button>
+    <pre id="response"></pre>
+  </div>
+
+  <!-- CodeMirror -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/javascript/javascript.min.js"></script>
+
+  <script>
+    // Configurando CodeMirror
+    const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html-editor'), {
+      mode: 'xml',
+      lineNumbers: true,
+      theme: 'default'
+    });
+
+    const cssEditor = CodeMirror.fromTextArea(document.getElementById('css-editor'), {
+      mode: 'css',
+      lineNumbers: true,
+      theme: 'default'
+    });
+
+    const jsEditor = CodeMirror.fromTextArea(document.getElementById('js-editor'), {
+      mode: 'javascript',
+      lineNumbers: true,
+      theme: 'default'
+    });
+
+    // Função para executar o código
+    function runCode() {
+      const html = htmlEditor.getValue();
+      const css = cssEditor.getValue();
+      const js = jsEditor.getValue();
+
+      // Gerar saída no iframe
+      const output = document.getElementById('output').contentWindow.document;
+      output.open();
+      output.write(`
+        <style>${css}</style>
+        ${html}
+        <script>${js}<\/script>
+      `);
+      output.close();
+
+      // Gerar explicação básica
+      const explanation = document.getElementById('explanation').contentWindow.document;
+      explanation.open();
+      explanation.write(`
+        <h2>Explicação do Código</h2>
+        <p><strong>HTML:</strong> ${analyzeHTML(html)}</p>
+        <p><strong>CSS:</strong> ${analyzeCSS(css)}</p>
+        <p><strong>JavaScript:</strong> ${analyzeJS(js)}</p>
+      `);
+      explanation.close();
+    }
+
+    // Funções básicas de análise
+    function analyzeHTML(html) {
+      return `O código HTML contém ${html.length} caracteres. Verifique se todas as tags estão corretamente fechadas.`;
+    }
+
+    function analyzeCSS(css) {
+      return `Seu código CSS tem ${css.length} caracteres. Certifique-se de usar seletores válidos.`;
+    }
+
+    function analyzeJS(js) {
+      return `O código JavaScript tem ${js.length} caracteres. Lembre-se de sempre testar funções.`;
+    }
+
+    // Função para enviar a mensagem para a IA
+    async function sendMessage() {
+      const userInput = document.getElementById('userInput').value;
+      const responseDiv = document.getElementById('response');
+      responseDiv.textContent = 'Carregando...';
+
+      try {
+        const response = await fetch('https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer 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', // Substitua por seu token
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ inputs: userInput })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro: ${response.status}`);
+        }
+
+        const data = await response.json();
+        responseDiv.textContent = data.generated_text || 'Resposta não disponível.';
+      } catch (error) {
+        responseDiv.textContent = `Erro: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
